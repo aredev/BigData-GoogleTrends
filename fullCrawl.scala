@@ -8,14 +8,15 @@ import org.apache.spark.{Logging, SparkConf}
 import java.io.IOException;
 import org.jsoup.Jsoup;
 import java.io.InputStreamReader;
+import scala.math.BigInt
 import org.apache.spark.SparkContext
 import org.apache.spark.SparkContext._
 import org.apache.spark.SparkConf
 
-object Cells extends java.io.Serializable{
+object Cells{
 
   def main(args: Array[String]){
-    val conf = new SparkConf().setAppName("Google Trends").setMaster("local[*]")
+    val conf = new SparkConf().setAppName("Google Trends")
     val sc = new SparkContext(conf)
 
     sc.getConf.toDebugString
@@ -29,7 +30,8 @@ object Cells extends java.io.Serializable{
     
     
 
-    val contents = warcs.filter{ _._2.header.warcTypeIdx == 2  }.             //Check if it is a response
+    val contents = warcs.filter{ _._2.header != null}.
+		   filter{ _._2.header.warcTypeIdx == 2  }.             //Check if it is a response
                    filter{ _._2.getHttpHeader().contentType != null}.        //Check if the ContentType is not Null, very important!
                    filter{ _._2.getHttpHeader().contentType.startsWith("text/html") }.   //Check if the ContentType is text/html
                    map{wr => (wr._2.header.warcTargetUriStr, getContent(wr._2))}         //Get the content
@@ -41,9 +43,10 @@ object Cells extends java.io.Serializable{
           (a,b) => (a._1 + b._1, a._2 + b._2)
     }
 	
-    val res = (stats._1.toFloat/stats._2.toFloat)*100
+    val res = (stats._1/stats._2)*100
 
-    println("This is the occurence of deadpool on the crawl %f".format(res))
+    println("This is the occurence of deadpool on the crawl")
+    println(res)
 
   }
   
@@ -85,12 +88,12 @@ object Cells extends java.io.Serializable{
   }
 
   //Returns how often a term occurs given the content of the page
-  def computeOccurence(content: String, term: String): (Int, Int) = {
+  def computeOccurence(content: String, term: String): (scala.math.BigInt, scala.math.BigInt) = {
     try {
       val body = Jsoup.parse(content).text().replaceAll("[^A-Za-z]", " ")
       val total = body.split(" +").length
       val needle = countSubstrings(term.toLowerCase(), body.toLowerCase())
-      return (needle, total)
+      return (BigInt(needle), BigInt(total))
     }
     catch {
       case e: Exception => throw new IOException("Caught exception processing input row ", e)
