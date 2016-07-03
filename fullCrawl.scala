@@ -38,13 +38,10 @@ object Cells{
                    map{wr => computeOccurence(getContent(wr._2), "deadpool")}.         //Get the content
 		   reduce{ (a,b) => (a._1 + b._1, a._2 + b._2) }
 
-    //val stats = contents.map{
-    //      content => computeOccurence(content, "deadpool")   //Term for which we want to see how it occurs in the crawl
-    //    }.reduce{
-    //      (a,b) => (a._1 + b._1, a._2 + b._2)
-    //}
+    println(contents._1)
+    println(contents._2)
 	
-    val res = (contents._1/contents._2)*100
+    val res = (contents._1.toFloat/contents._2.toFloat)*100
 
     println("This is the occurence of deadpool on the crawl")
     println(res)
